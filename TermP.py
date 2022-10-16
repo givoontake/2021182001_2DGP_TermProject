@@ -1,12 +1,11 @@
-from pico2d import *
-import game_framewark
+import pico2d
 
-open_canvas()
+import game_framework
+import mainscreen
+import gameplay
 
-forest = load_image('forest.png')
-
-# open_canvas()
-# close_canvas()
-forest.draw_now(400, 300)
-# update_canvas()
+pico2d.open_canvas()
+game_framework.run(mainscreen)
+game_framework.run(gameplay)
+pico2d.close_canvas()
 
