@@ -37,12 +37,21 @@ def handle_events():
                 elif run_game == True:
                     run_game = False
                     run_shop = True
-            elif event.key == SDLK_1:
-                if run_shop == True and s1 < 6:
+            elif event.key == SDLK_1 and run_shop == True:
+                if s1 < 4:
                     s1 += 1
-                    LV = load_image('LV.png')
-                    LV.clip_draw(31 * s1, 0, 35, 31, 725, 407)
-                    update_canvas()
+            elif event.key == SDLK_2 and run_shop == True:
+                if s2 < 4:
+                    s2 += 1
+            elif event.key == SDLK_3 and run_shop == True:
+                if s3 < 4:
+                    s3 += 1
+            elif event.key == SDLK_4 and run_shop == True:
+                if s4 < 1:
+                    s4 += 1
+            elif event.key == SDLK_5 and run_shop == True:
+                if s5 < 1:
+                    s5 += 1
 
 def mainscreen():
     global screen
@@ -63,10 +72,21 @@ def game():
 
 
 def upgrade_shop():
-    global shop
+    global shop, LV, s1, s2, s3, s4, s5
     clear_canvas()
     shop = load_image('shop.png')
+    LV = load_image('LV.png')
     shop.draw(430, 270)
+    if s1 > -1:
+        LV.clip_draw(31 * s1, 0, 35, 31, 725, 407)
+    if s2 > -1:
+        LV.clip_draw(31 * s2, 0, 35, 31, 725, 320)
+    if s3 > -1:
+        LV.clip_draw(31 * s3, 0, 35, 31, 725, 233)
+    if s4 > 0:
+        LV.clip_draw(0, 0, 35, 31, 725, 146)
+    if s5 > 0:
+        LV.clip_draw(0, 0, 35, 31, 725, 59)
     update_canvas()
     handle_events()
 
