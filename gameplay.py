@@ -3,15 +3,15 @@ import game_framework
 import shop
 import mainscreen
 
-class Grass:
-    def __init__(self):
-        self.image = load_image('forest.png')
+# class Grass:
+#     def __init__(self):
+#         self.image = load_image('forest.png')
+#
+#     def draw(self):
+#         self.image.draw(400, 350)
 
-    def draw(self):
-        self.image.draw(400, 30)
-
-class Boy:
-    pass
+# class Boy:
+#     pass
     # def __init__(self):
     #     self.x, self.y = 0, 90
     #     self.frame = 0
@@ -32,8 +32,8 @@ class Boy:
     #         self.x = 0
 
 
-    def draw(self):
-        pass
+    # def draw(self):
+    #     pass
         # global num
         # if self.item == 'BigBall':
         #     self.big_ball_image.draw(self.x + 10, self.y + 50)
@@ -53,6 +53,8 @@ def handle_events():
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_b:
                 game_framework.push_state(shop)
+            elif event.key == SDLK_ESCAPE:
+                game_framework.pop_state()
 
 # 게임 초기화 : 객체들을 생성
 boy = None
@@ -60,8 +62,8 @@ grass = None
 running = True
 def enter():
     global boy, grass, running
-    boy = Boy()
-    grass = Grass()
+    # boy = Boy()
+    grass = load_image('forest.png')
     running = True
 
 
@@ -70,7 +72,6 @@ def exit():
     global boy, grass
     del boy
     del grass
-
 
 # 게임 월드에 객체를 업데이트 - 게임 로직
 def update():

@@ -21,13 +21,13 @@ def update():
 
 def draw():
     clear_canvas()
-    gameplay.draw_world()
+    enter()
+    # gameplay.draw_world()
     image.draw(400, 300)
     update_canvas()
     pass
 
 def handle_events():
-    global num
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
