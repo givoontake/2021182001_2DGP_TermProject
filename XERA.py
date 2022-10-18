@@ -108,6 +108,7 @@ def upgrade_shop():
 def game():
     global character, forest, x, xdir, frame
     clear_canvas()
+    black.draw(400,350)
     forest.draw(400, 350)
     character.clip_draw(27 + frame * 42, 300, 42, 60, x, 90)
     update_canvas()
@@ -120,9 +121,10 @@ def game():
 
 open_canvas()
 
-character = load_image('player.png')
-forest = load_image('forest.png')
 screen = load_image('mainscreen.png')
+forest = load_image('forest.png')
+black = load_image('black.png')
+character = load_image('player.png')
 shop = load_image('shop.png')
 LV = load_image('LV.png')
 
