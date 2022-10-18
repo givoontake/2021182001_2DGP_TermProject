@@ -1,23 +1,56 @@
 from pico2d import *
 
-open_canvas()
+def handle_events_character():
+    global run_game, xdir
+    global running
+    global dir
 
-image = load_image('shop.png')
-image2 = load_image('LV.png')
+    events = get_events()
+    for event in events:
+        if event.type == SDL_QUIT:
+            quit()
+        elif event.type == SDL_KEYDOWN:
+            if event.key == SDLK_d:
+                xdir += 1
+            elif event.key == SDLK_a:
+                xdir -= 1
+        elif event.key == SDLK_ESCAPE:
+            running = False
+        elif event.type == SDL_KEYUP:
+            if event.key == SDLK_d:
+                xdir -= 1
+            elif event.key == SDLK_a:
+                xdir += 1
 
 def test():
-    global image, image2
+    global image
     clear_canvas()
-    image.draw(430, 270)
-    # for i in range(10):
-    #     image2.clip_draw(31*i, 0, 35, 31, 725, 320)
-    #     update_canvas()
-    #     delay(1)
-    image2.clip_draw(31, 0, 35, 31, 725, 233)
-    update_canvas()
-# 407, 320, 233
+    image.draw(400, 350)
 
-test()
+
+def player():
+    while running:
+        global cha, image, x, xdir, frame
+        clear_canvas()
+        image.draw(400, 350)
+        cha.clip_draw(27+frame * 42, 300, 42, 60, x, 90)
+        update_canvas()
+        handle_events_character()
+        frame = (frame + 1) % 4
+        x += xdir * 5
+        delay(0.1)
+
+running = True
+x = 400
+frame = 0
+xdir = 0
+
+open_canvas()
+
+image = load_image('forest.png')
+cha = load_image('player.png')
+
+player()
 delay(3)
 
 close_canvas()
