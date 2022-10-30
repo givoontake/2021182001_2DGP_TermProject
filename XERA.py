@@ -5,6 +5,8 @@ run_screen = True
 run_game = None
 run_shop = None
 
+fire = False
+
 s1 = 0
 s2 = 0
 s3 = 0
@@ -13,10 +15,11 @@ s5 = 0
 
 x = 400
 frame = 0
+frame2 = 0
 xdir = 0
 
 def handle_events():
-    global run_screen, run_game, run_shop, LV, s1, s2, s3, s4, s5, xdir
+    global run_screen, run_game, run_shop, LV, s1, s2, s3, s4, s5, xdir, fire, frame2
 
     events = get_events()
     for event in events:
@@ -41,6 +44,9 @@ def handle_events():
                 xdir += 1
             elif event.key == SDLK_a:
                 xdir -= 1
+            elif event.key == SDLK_k:
+                fire = True
+
             elif event.key == SDLK_1 and run_shop == True:
                 if s1 < 4:
                     s1 += 1
@@ -58,9 +64,12 @@ def handle_events():
                     s5 += 1
         elif event.type == SDL_KEYUP:
             if event.key == SDLK_d:
-                    xdir -= 1
+                xdir -= 1
             elif event.key == SDLK_a:
-                    xdir += 1
+                xdir += 1
+            elif event.key == SDLK_k:
+                fire = False
+                frame2 = 0
 def handle_events_character():
     global run_game, xdir
 
@@ -106,16 +115,21 @@ def upgrade_shop():
 
 
 def game():
-    global character, forest, x, xdir, frame
+    global character, forest, x, xdir, frame, frame2
     clear_canvas()
-    black.draw(400,350)
+    black.draw(400, 350)
     forest.draw(400, 350)
-    character.clip_draw(40+frame * 62, 450, 62, 90, x, 90)
+    if(fire == False):
+        character.clip_draw(40+frame * 62, 450, 62, 90, x, 90)
+    else:
+        character.clip_draw(40, 320, 62, 90, x, 90)
+        character.clip_draw(320 + 60 * frame2, 225, 40, 80, x + 40, 90)
     update_canvas()
     handle_events()
     # handle_events_character()
     frame = (frame + 1) % 4
-    x += xdir * 5
+    frame2 = (frame2 + 1) % 2
+    x += xdir * 10
     delay(0.1)
 
 
