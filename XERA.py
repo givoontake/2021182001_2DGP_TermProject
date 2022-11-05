@@ -33,7 +33,7 @@ def handle_events():
                 elif run_shop == True:
                     run_shop = False
                     run_game = True
-            elif event.key == SDLK_p:
+            elif event.key == SDLK_RETURN:
                 if run_screen == True:
                     run_screen = False
                     run_game = True
