@@ -6,6 +6,9 @@ class Map:
     def __init__(self):
         self.image = load_image('forest.png')
         self.image2 = load_image('black.png')
+        self.background_music = load_music('background.mp3')
+        self.background_music.set_volume(25)
+        self.background_music.repeat_play()
 
     def draw(self):
         self.image2.draw(400, 350)
@@ -45,10 +48,10 @@ class Player:
                 self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, 90)
         elif self.non_zero_dir < 0:
             if hunter.fire == False:
-                self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'flip', self.x, 90, 62, 90)
+                self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
             else:
-                self.image.clip_draw(40, 320, 62, 90, self.x, 90)
-                self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, 90)
+                self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, 90, 62, 90)
+                self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, 90, 40, 80)
 
 
 
@@ -58,15 +61,21 @@ class Bullet:
         self.x = hunter.x
         self.y = hunter.y
         self.fire_sound = load_wav('fire_sound.wav')
-        self.fire_sound.set_volume(10)
+        self.fire_sound.set_volume(25)
         self.sound = True
+        self.bullet_dir = hunter.non_zero_dir
 
     def update(self):
-        # self.bul += 1
-        self.x += 5
+        if self.bullet_dir > 0:
+            self.x += 3
+        elif self.bullet_dir < 0:
+            self.x -= 3
 
     def draw(self):
-        self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x + 40, 90)
+        if self.bullet_dir > 0:
+            self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x + 40, 90)
+        elif self.bullet_dir < 0:
+            self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x - 40, 90)
 
 
 def handle_events():
