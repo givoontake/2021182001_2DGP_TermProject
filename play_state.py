@@ -20,6 +20,8 @@ class Map:
 class Zombie:
     def __init__(self):
         self.x, self.y = random.randint(1000, 2000), 90 # 충돌 검사 등 뭔가 까다로워서 왼쪽 객체는 일단 따로 만들 계획
+        self.offense = 30
+        self.of_frequency = 0
         self.hp = 200
         self.frame = 0
         self.frame2 = 0
@@ -27,7 +29,6 @@ class Zombie:
         self.div2 = 0
         self.dir = 0
         self.image = load_image('zombie.png')
-        self.init_xy = True
         # self.zombie_sound = load_wav('zombie_sound.wav') # 엑세스 위반..
         # self.zombie_sound.set_volume(10)
         # self.zombie_sound.repeat_play()
@@ -62,14 +63,15 @@ class Player:
     def __init__(self):
         self.x, self.y = 400, 90
         self.offense = 50
-        self.frame = 0
-        self.frame2 = 0
+        self.hp = 500
+        self.frame, frame2 = 0, 0
+        self.frame3 = 0
         self.div = 0
+        self.div3 = 0
         self.dir = 0
         self.non_zero_dir = 1
         self.fire = False
         self.image = load_image('Player.png')
-        self.item = None
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
@@ -84,10 +86,13 @@ class Player:
             self.x = 750
         elif self.x < 50:
             self.x = 50
+        if self.hp <= 0:
+            self.div3 += 1
+            self.frame3 = self.div3 // 20
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def draw(self):
-        if self.non_zero_dir > 0:
+        if self.non_zero_dir > 0 and self.hp > 0:
             if self.fire == False and self.dir != 0: # 돌아다니는 모션
                 self.image.clip_draw(40 + self.frame * 62, 450, 62, 90, self.x, 90)
             elif self.fire == False and self.dir == 0: # 정지 모션
@@ -96,7 +101,7 @@ class Player:
                 self.image.clip_draw(40, 320, 62, 90, self.x, 90)
                 self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, 90)
 
-        elif self.non_zero_dir < 0: # 방향만 반대고 모션은 똑같음
+        elif self.non_zero_dir < 0 and self.hp > 0: # 방향만 반대고 모션은 똑같음
             if self.fire == False and self.dir != 0:
                 self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
             elif self.fire == False and self.dir == 0:
@@ -104,7 +109,13 @@ class Player:
             elif self.fire == True:
                 self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, 90, 62, 90)
                 self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, 90, 40, 80)
-
+        if self.hp <= 0:
+            if self.frame3 == 0:
+                self.image.clip_draw(170, 100, 62, 90, self.x, 90)
+            elif self.frame3 > 0:
+                self.image.clip_draw(240, 100, 90, 90, self.x, 90)
+            if self.frame3 == 20:
+                game_framework.change_state(logo_state)
 
 
 class Bullet:
@@ -173,6 +184,15 @@ zombies = []
 
 running = True
 
+def body_crash_check():
+    for zombie in zombies:
+        if zombie.row_x < hunter.high_x:
+            zombie.x += 0.3
+            zombie.of_frequency += 1
+            if zombie.of_frequency % 100 == 0:
+                hunter.hp -= zombie.offense
+                hunter.dir = 0
+
 def bullet_draw():
     for bullet in bullets:
         bullet.draw()
@@ -186,7 +206,6 @@ def zombie_draw():
             zombie.draw()
         else:
             zombie.die_draw()
-
 
 remove = False
 
@@ -239,6 +258,7 @@ def update():
     hunter.update()
     bullet_update()
     zombie_update()
+    body_crash_check()
     bullet_del()
     zombie_del()
 
