@@ -19,14 +19,18 @@ class Map:
 
 class Zombie:
     def __init__(self):
-        self.x, self.y = random.randint(1000, 2000), 90
-        self.hp = 150
+        self.x, self.y = random.randint(1000, 2000), 90 # 충돌 검사 등 뭔가 까다로워서 왼쪽 객체는 일단 따로 만들 계획
+        self.hp = 200
         self.frame = 0
         self.frame2 = 0
         self.div = random.randint(0, 200)
         self.div2 = 0
         self.dir = 0
         self.image = load_image('zombie.png')
+        self.init_xy = True
+        # self.zombie_sound = load_wav('zombie_sound.wav') # 엑세스 위반..
+        # self.zombie_sound.set_volume(10)
+        # self.zombie_sound.repeat_play()
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
@@ -39,7 +43,7 @@ class Zombie:
             self.div2 += 1
             self.frame2 = self.div2 // 30
         if self.hp > 0:
-            self.x -= 0.2
+            self.x -= 0.3
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def draw(self):
@@ -84,15 +88,20 @@ class Player:
 
     def draw(self):
         if self.non_zero_dir > 0:
-            if hunter.fire == False:
+            if self.fire == False and self.dir != 0: # 돌아다니는 모션
                 self.image.clip_draw(40 + self.frame * 62, 450, 62, 90, self.x, 90)
-            else:
+            elif self.fire == False and self.dir == 0: # 정지 모션
+                self.image.clip_draw(40, 450, 62, 90, self.x, 90)
+            elif self.fire == True: # 발사 모션
                 self.image.clip_draw(40, 320, 62, 90, self.x, 90)
                 self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, 90)
-        elif self.non_zero_dir < 0:
-            if hunter.fire == False:
+
+        elif self.non_zero_dir < 0: # 방향만 반대고 모션은 똑같음
+            if self.fire == False and self.dir != 0:
                 self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
-            else:
+            elif self.fire == False and self.dir == 0:
+                self.image.clip_composite_draw(40, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
+            elif self.fire == True:
                 self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, 90, 62, 90)
                 self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, 90, 40, 80)
 
@@ -134,23 +143,23 @@ def handle_events():
             elif event.key == SDLK_b:
                 game_framework.push_state(item_state)
             elif event.key == SDLK_d:
-                hunter.dir = 1
+                hunter.dir += 1
                 hunter.non_zero_dir = 1
             elif event.key == SDLK_a:
-                hunter.dir = -1
+                hunter.dir += -1
                 hunter.non_zero_dir = -1
-            elif event.key == SDLK_k:
+            elif event.key == SDLK_k or event.key == SDLK_l:
                 bullets.append(Bullet())
                 hunter.dir = 0
                 hunter.fire = True
 
         elif event.type == SDL_KEYUP: # 키를 동시에 누를 경우 생기는 문제는 여기서 처리를 해줘야 하나..
-            hunter.dir = 0
-            # if event.key == SDLK_d:
-            #     boy.x -= 5
-            # elif event.key == SDLK_a:
-            #     boy.x += 5
-            if event.key == SDLK_k:
+            # hunter.dir = 0
+            if event.key == SDLK_d:
+               hunter.dir += -1
+            elif event.key == SDLK_a:
+                hunter.dir += 1
+            if event.key == SDLK_k or event.key == SDLK_l:
                 hunter.fire = False
 
 
@@ -191,7 +200,7 @@ def bullet_del():
                 zombie.hp -= hunter.offense
                 remove = True
                 break
-        if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800근처에서 충돌 검사시 두번 삭제 오류 방지
+        if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
 def zombie_del():
