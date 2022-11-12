@@ -1,22 +1,63 @@
 from pico2d import *
 import game_framework
+import logo_state
 import item_state
+import random
 
 class Map:
     def __init__(self):
         self.image = load_image('forest.png')
         self.image2 = load_image('black.png')
         self.background_music = load_music('background.mp3')
-        self.background_music.set_volume(25)
+        self.background_music.set_volume(15)
         self.background_music.repeat_play()
 
     def draw(self):
         self.image2.draw(400, 350)
         self.image.draw(400, 350)
 
+class Zombie:
+    def __init__(self):
+        self.x, self.y = random.randint(900, 1000), 90
+        self.hp = 300
+        self.frame = 0
+        self.frame2 = 0
+        self.div = 0
+        self.div2 = 0
+        self.dir = 0
+        self.image = load_image('zombie.png')
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+
+    def update(self):
+        if self.hp > 0:
+            self.div += 1
+            if self.div > 200:
+                self.div = 0
+        else:
+            self.div2 += 1
+            self.frame2 = self.div2 // 50
+
+        self.frame = self.div // 50
+        if self.hp > 0:
+            self.x -= 0.2
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+
+    def draw(self):
+        self.image.clip_draw(self.frame * 120, 680, 120, 90, self.x, 90)
+
+    def die_draw(self):
+        if self.frame2 < 4:
+            self.image.clip_draw(self.frame2 * 120, 340, 120, 90, self.x, 90)
+        elif self.frame2 >= 4 and self.frame2 <= 7:
+            self.image.clip_draw((self.frame2-4) * 120, 220, 120, 90, self.x, 90)
+        else:
+            self.image.clip_draw(3 * 120, 220, 120, 90, self.x, 90)
+
+
 class Player:
     def __init__(self):
         self.x, self.y = 400, 90
+        self.offense = 50
         self.frame = 0
         self.frame2 = 0
         self.div = 0
@@ -28,9 +69,9 @@ class Player:
 
     def update(self):
         self.div += 1
-        if(self.div > 90):
+        if self.div > 200:
             self.div = 0
-        self.frame = self.div // 30
+        self.frame = self.div // 50
         # self.frame = (self.frame + 1) % 4
         self.frame2 = (self.frame + 1) % 2
         self.x += self.dir * 0.5
@@ -64,6 +105,7 @@ class Bullet:
         self.fire_sound.set_volume(25)
         self.sound = True
         self.bullet_dir = hunter.non_zero_dir
+        self.div = 0
 
     def update(self):
         if self.bullet_dir > 0:
@@ -77,6 +119,9 @@ class Bullet:
         elif self.bullet_dir < 0:
             self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x - 40, 90)
 
+    # def hit_draw(self):
+    #     self.image.clip_draw(350 + 60 * 2, 225, 30, 80, self.x, 90)
+
 
 def handle_events():
     global bullets
@@ -85,7 +130,9 @@ def handle_events():
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN:
-            if event.key == SDLK_b:
+            if event.key == SDLK_ESCAPE:
+                game_framework.change_state(logo_state)
+            elif event.key == SDLK_b:
                 game_framework.push_state(item_state)
             elif event.key == SDLK_d:
                 hunter.dir = 1
@@ -112,7 +159,9 @@ def handle_events():
 hunter = None
 forest = None
 bullet = None
+# zombie = None
 bullets = []
+zombies = []
 
 running = True
 
@@ -123,20 +172,46 @@ def bullet_draw():
             bullet.fire_sound.play()
             bullet.sound = False
 
+def zombie_draw():
+    for zombie in zombies:
+        if zombie.hp > 0:
+            zombie.draw()
+        else:
+            zombie.die_draw()
+
+
 def bullet_del():
     for bullet in bullets:
+        for zombie in zombies:
+            if zombie.row_x < bullet.x and zombie.hp > 0:
+                # bullet.hit_draw()
+                bullets.remove(bullet)
+                zombie.hp -= hunter.offense
+                # if zombie.hp < 0:
+                #     zombies.remove(zombie)
+                break
         if bullet.x > 800 or bullet.x < 0:
             bullets.remove(bullet)
+
+def zombie_del():
+    for zombie in zombies:
+        if zombie.hp < 0 and zombie.div2 > 500:
+            zombies.remove(zombie)
 
 def bullet_update():
     for bullet in bullets:
         bullet.update()
 
+def zombie_update():
+    for zombie in zombies:
+        zombie.update()
+
 def enter():
-    global hunter, forest, bullet, running
+    global hunter, forest, bullet, zombie, zombies, running
     hunter = Player()
     forest = Map()
     bullet = Bullet()
+    zombies = [Zombie() for i in range(5)]
     running = True
 
 
@@ -153,13 +228,16 @@ def exit():
 def update():
     hunter.update()
     bullet_update()
+    zombie_update()
     bullet_del()
+    zombie_del()
 
 # 게임 월드 랜더링
 def draw_world():
     forest.draw()
     hunter.draw()
     bullet_draw()
+    zombie_draw()
     delay(0.001)
 
 def draw():
