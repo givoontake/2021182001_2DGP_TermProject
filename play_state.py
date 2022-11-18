@@ -19,7 +19,8 @@ class Map:
 
 class Zombie:
     def __init__(self):
-        self.x, self.y = random.randint(1000, 2000), 90 # 충돌 검사 등 뭔가 까다로워서 왼쪽 객체는 일단 따로 만들 계획
+        self.x, self.y = random.randint(-100, 100), 90 # 충돌 검사 등 뭔가 까다로워서 왼쪽 객체는 일단 따로 만들 계획
+        self.random_location = False
         self.offense = 30
         self.of_frequency = 0
         self.hp = 200
@@ -30,11 +31,19 @@ class Zombie:
         self.dir = 0
         self.image = load_image('zombie.png')
         # self.zombie_sound = load_wav('zombie_sound.wav') # 엑세스 위반..
-        # self.zombie_sound.set_volume(10)
-        # self.zombie_sound.repeat_play()
+        # self.zombie_sound.set_volume(1)
+        # self.zombie_sound.repeat_play() # 객체 생성 시 보이지도 않는데 좀비 소리가 나겠네;
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
+        if self.random_location == False:
+            if self.x >= 0:
+                self.x = random.randint(1000, 2000)
+                self.dir = -1
+            else:
+                self.x = random.randint(-1200, -200)
+                self.dir = 1
+            self.random_location = True
         if self.hp > 0:
             self.div += 1
             self.frame = self.div // 50
@@ -44,34 +53,50 @@ class Zombie:
             self.div2 += 1
             self.frame2 = self.div2 // 30
         if self.hp > 0:
-            self.x -= 0.3
+            if self.dir < 0:
+                self.x -= 0.3
+            else:
+                self.x += 0.3
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def draw(self):
-        self.image.clip_draw(self.frame * 120, 680, 120, 90, self.x, 90)
+        if self.dir < 0:
+            self.image.clip_draw(self.frame * 120, 680, 120, 90, self.x, 90)
+        else:
+            self.image.clip_composite_draw(self.frame * 120, 680, 120, 90, 0, 'h', self.x, 90, 120, 90)
 
     def die_draw(self):
-        if self.frame2 < 4:
-            self.image.clip_draw(self.frame2 * 120, 340, 120, 90, self.x, 90)
-        elif self.frame2 >= 4 and self.frame2 <= 7:
-            self.image.clip_draw((self.frame2-4) * 120, 220, 120, 90, self.x, 90)
+        if self.dir < 0:
+            if self.frame2 < 4:
+                self.image.clip_draw(self.frame2 * 120, 340, 120, 90, self.x, 90)
+            elif self.frame2 >= 4 and self.frame2 <= 7:
+                self.image.clip_draw((self.frame2-4) * 120, 220, 120, 90, self.x, 90)
+            else:
+                self.image.clip_draw(3 * 120, 220, 120, 90, self.x, 90)
         else:
-            self.image.clip_draw(3 * 120, 220, 120, 90, self.x, 90)
-
+            if self.frame2 < 4:
+                self.image.clip_composite_draw(self.frame2 * 120, 340, 120, 90, 0, 'h', self.x, 90, 120, 90)
+            elif self.frame2 >= 4 and self.frame2 <= 7:
+                self.image.clip_composite_draw((self.frame2 - 4) * 120, 220, 120, 90, 0, 'h', self.x, 90, 120, 90)
+            else:
+                self.image.clip_composite_draw(3 * 120, 220, 120, 90, 0, 'h', self.x, 90, 120, 90)
 
 class Player:
     def __init__(self):
         self.x, self.y = 400, 90
         self.offense = 50
         self.hp = 500
-        self.frame, frame2 = 0, 0
-        self.frame3 = 0
+        self.frame, self.frame2, self.frame3 = 0, 0, 0
         self.div = 0
         self.div3 = 0
+        self.div4 = 0
         self.dir = 0
         self.non_zero_dir = 1
         self.fire = False
+        self.clear = False
         self.image = load_image('Player.png')
+        self.image2 = load_image('mission_failed.png')
+        self.image3 = load_image('mission_success.png')
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
@@ -89,6 +114,8 @@ class Player:
         if self.hp <= 0:
             self.div3 += 1
             self.frame3 = self.div3 // 20
+        if self.clear == True:
+            self.div4 += 1
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def draw(self):
@@ -114,9 +141,17 @@ class Player:
                 self.image.clip_draw(170, 100, 62, 90, self.x, 90)
             elif self.frame3 > 0:
                 self.image.clip_draw(240, 100, 90, 90, self.x, 90)
+            if self.frame3 > 5:
+                self.image2.draw(400, 300)
             if self.frame3 == 20:
+                delay(2)
                 game_framework.change_state(logo_state)
-
+        elif self.clear == True:
+            if self.div4 < 1000:
+                self.image3.draw(400, 300)
+            elif self.div4 == 1000:
+                self.clear = False
+                game_framework.push_state(item_state)
 
 class Bullet:
     def __init__(self):
@@ -183,11 +218,20 @@ bullets = []
 zombies = []
 
 running = True
+monster_num = 40
+wave_clear = False
 
-def body_crash_check():
+def remain_monster_check():
+    if len(zombies) == 0:
+        hunter.clear = True
+
+def collision_check():
     for zombie in zombies:
-        if zombie.row_x < hunter.high_x:
-            zombie.x += 0.3
+        if (zombie.row_x < hunter.high_x and zombie.dir < 0) or (zombie.high_x > hunter.row_x and zombie.dir > 0):
+            if zombie.dir < 0:
+                zombie.x += 0.3
+            else:
+                zombie.x -= 0.3
             zombie.of_frequency += 1
             if zombie.of_frequency % 100 == 0:
                 hunter.hp -= zombie.offense
@@ -214,7 +258,7 @@ def bullet_del():
     for bullet in bullets:
         remove = False
         for zombie in zombies:
-            if zombie.row_x < bullet.x and zombie.hp > 0:
+            if (zombie.row_x < bullet.x and zombie.hp > 0 and zombie.dir < 0) or (zombie.high_x > bullet.x and zombie.hp > 0 and zombie.dir > 0):
                 bullets.remove(bullet)
                 zombie.hp -= hunter.offense
                 remove = True
@@ -236,11 +280,11 @@ def zombie_update():
         zombie.update()
 
 def enter():
-    global hunter, forest, bullet, zombies, running
+    global hunter, forest, bullet, zombies, running, monster_num
     hunter = Player()
     forest = Map()
     bullet = Bullet()
-    zombies = [Zombie() for i in range(30)]
+    zombies = [Zombie() for i in range(monster_num)]
     running = True
 
 
@@ -258,9 +302,10 @@ def update():
     hunter.update()
     bullet_update()
     zombie_update()
-    body_crash_check()
+    collision_check()
     bullet_del()
     zombie_del()
+    remain_monster_check()
 
 # 게임 월드 랜더링
 def draw_world():
