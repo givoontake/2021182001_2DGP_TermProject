@@ -9,23 +9,36 @@ class Map:
     def __init__(self):
         self.image = load_image('forest.png')
         self.image2 = load_image('black.png')
+        self.image3 = load_image('hp.png')
         self.background_music = load_music('background.mp3')
         self.background_music.set_volume(15)
         self.background_music.repeat_play()
+        self.decrease = 0
+        self.before_hp = 1000
+        self.after_hp = None
+
+    def update(self):
+        self.after_hp = hunter.hp
+        if self.before_hp - self.after_hp > 0:
+            self.decrease += (self.before_hp - self.after_hp) // 4.55 # 1000/220 (체력//(체력/hp바 크기)
+            self.decrease = int(self.decrease)
+            self.before_hp = self.after_hp
 
     def draw(self):
         self.image2.draw(400, 350)
         self.image.draw(400, 350)
+        self.image3.draw(550, 330)
+        self.image3.clip_draw(750-self.decrease, 400, 300, 100, 136-self.decrease, 525)
+        # 업데이트는 맵이 먼저거 충돌 체크가 나중이라 헌터 드로우에서 바로 hp <=0이 체크가 되어서 빠르게 감소할경우 한 타임 늦게 hp가 감소
 
 class Zombie:
     def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 90 # 충돌 검사 등 뭔가 까다로워서 왼쪽 객체는 일단 따로 만들 계획
+        self.x, self.y = random.randint(-100, 100), 90
         self.random_location = False
         self.offense = 30
         self.of_frequency = 0
         self.hp = 200
-        self.frame = 0
-        self.frame2 = 0
+        self.frame, self.frame2 = 0, 0
         self.div = random.randint(0, 200)
         self.div2 = 0
         self.dir = 0
@@ -38,10 +51,10 @@ class Zombie:
     def update(self):
         if self.random_location == False:
             if self.x >= 0:
-                self.x = random.randint(1000, 2000)
+                self.x = random.randint(1000, 2500)
                 self.dir = -1
             else:
-                self.x = random.randint(-1200, -200)
+                self.x = random.randint(-1700, -200)
                 self.dir = 1
             self.random_location = True
         if self.hp > 0:
@@ -85,11 +98,9 @@ class Player:
     def __init__(self):
         self.x, self.y = 400, 90
         self.offense = 50
-        self.hp = 500
+        self.hp = 1000
         self.frame, self.frame2, self.frame3 = 0, 0, 0
-        self.div = 0
-        self.div3 = 0
-        self.div4 = 0
+        self.div, self.div3, self.div4 = 0, 0, 0
         self.dir = 0
         self.non_zero_dir = 1
         self.fire = False
@@ -178,7 +189,7 @@ class Bullet:
 
 
 def handle_events():
-    global bullets
+    global bullets, fire_sound
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
@@ -196,6 +207,7 @@ def handle_events():
                 hunter.non_zero_dir = -1
             elif event.key == SDLK_k or event.key == SDLK_l:
                 bullets.append(Bullet())
+                # bullet_sound.fire_sound.play()
                 hunter.dir = 0
                 hunter.fire = True
 
@@ -206,6 +218,7 @@ def handle_events():
             elif event.key == SDLK_a:
                 hunter.dir += 1
             if event.key == SDLK_k or event.key == SDLK_l:
+                hunter.dir = 0
                 hunter.fire = False
 
 
@@ -213,6 +226,7 @@ def handle_events():
 hunter = None
 forest = None
 bullet = None
+bullet_sound = None
 # zombie = None
 bullets = []
 zombies = []
@@ -280,10 +294,11 @@ def zombie_update():
         zombie.update()
 
 def enter():
-    global hunter, forest, bullet, zombies, running, monster_num
+    global hunter, forest, bullet, bullet_sound, zombies, running, monster_num
     hunter = Player()
     forest = Map()
     bullet = Bullet()
+    bullet_sound = Bullet()
     zombies = [Zombie() for i in range(monster_num)]
     running = True
 
@@ -299,6 +314,7 @@ def exit():
 
 # 게임 월드에 객체를 업데이트 - 게임 로직
 def update():
+    forest.update()
     hunter.update()
     bullet_update()
     zombie_update()
