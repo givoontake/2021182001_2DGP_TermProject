@@ -1,6 +1,7 @@
 from pico2d import *
 import game_framework
 import logo_state
+import pause_state
 import item_state
 import random
 import time
@@ -196,7 +197,7 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_ESCAPE:
-                game_framework.change_state(logo_state)
+                game_framework.push_state(pause_state)
             elif event.key == SDLK_b:
                 game_framework.push_state(item_state)
             elif event.key == SDLK_d:
