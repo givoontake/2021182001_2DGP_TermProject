@@ -16,14 +16,17 @@ class Map:
         self.background_music.repeat_play()
         self.decrease = 0
         self.before_hp = 1000
-        self.after_hp = None
+        self.after_hp = 1000
 
     def update(self):
         self.after_hp = hunter.hp
         if self.before_hp - self.after_hp > 0:
-            self.decrease += (self.before_hp - self.after_hp) // 4.55 # 1000/220 (체력//(체력/hp바 크기)
-            self.decrease = int(self.decrease)
-            self.before_hp = self.after_hp
+            if hunter.hp > 0:
+                self.decrease += (self.before_hp - self.after_hp) // 4.2 # 1000/220 (체력//(체력/hp바 크기)
+                self.decrease = int(self.decrease) # 정수형으로 바꾸면서 생기는 값의 누락 때문에 정확한 hp 감소가 안됨.
+                print(self.decrease)
+                print(hunter.hp)
+                self.before_hp = self.after_hp
 
     def draw(self):
         self.image2.draw(400, 350)
@@ -198,8 +201,6 @@ def handle_events():
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_ESCAPE:
                 game_framework.push_state(pause_state)
-            elif event.key == SDLK_b:
-                game_framework.push_state(item_state)
             elif event.key == SDLK_d:
                 hunter.dir += 1
                 hunter.non_zero_dir = 1
@@ -233,7 +234,7 @@ bullets = []
 zombies = []
 
 running = True
-monster_num = 40
+monster_num = 5
 wave_clear = False
 
 def remain_monster_check():
@@ -250,6 +251,7 @@ def collision_check():
             zombie.of_frequency += 1
             if zombie.of_frequency % 100 == 0:
                 hunter.hp -= zombie.offense
+                # forest.after_hp -= zombie.offense
                 hunter.dir = 0
 
 def bullet_draw():
