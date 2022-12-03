@@ -76,6 +76,7 @@ class Skeleton:
         self.div = random.randint(0, 200)
         self.div2, self.div3 = 0, 0
         self.dir = 0
+        self.collision = False
         self.image = load_image('skeleton.png')
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
@@ -88,19 +89,29 @@ class Skeleton:
                 self.x = random.randint(-1200, -200)
                 self.dir = 1
             self.random_location = True
+
         if self.hp > 0:
             self.div += 1
             self.frame = self.div // 50
             if self.div >= 250:
                 self.div = 0
-        else:
-            self.div3 += 1
-            self.frame3 = self.div3 // 30
-        if self.hp > 0:
+
             if self.dir < 0:
                 self.x -= 0.3
             else:
                 self.x += 0.3
+
+            if self.collision == True:
+                self.div2 += 1
+                self.frame2 = self.div2 // 50
+                if self.div2 >= 200:
+                    self.div2 = 0
+            else:
+                self.div2 = 0
+        else:
+            self.div3 += 1
+            self.frame3 = self.div3 // 30
+
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def draw(self):
