@@ -25,8 +25,6 @@ class Map:
             if hunter.hp > 0:
                 self.decrease += (self.before_hp - self.after_hp) // 4.2 # 1000/220 (체력//(체력/hp바 크기)
                 self.decrease = int(self.decrease) # 정수형으로 바꾸면서 생기는 값의 누락 때문에 정확한 hp 감소가 안됨.
-                print(self.decrease)
-                print(hunter.hp)
                 self.before_hp = self.after_hp
 
     def draw(self):
@@ -34,7 +32,6 @@ class Map:
         self.image.draw(400, 350)
         self.image3.draw(550, 330)
         self.image3.clip_draw(750-self.decrease, 400, 300, 100, 136-self.decrease, 525)
-        # 업데이트는 맵이 먼저거 충돌 체크가 나중이라 헌터 드로우에서 바로 hp <=0이 체크가 되어서 빠르게 감소할경우 한 타임 늦게 hp가 감소
 
 class Player:
     def __init__(self):
@@ -99,12 +96,12 @@ class Player:
             if self.frame3 == 20:
                 delay(2)
                 game_framework.change_state(logo_state)
-        elif self.clear == True:
-            if self.div4 < 1000:
-                self.image3.draw(400, 300)
-            elif self.div4 == 1000:
-                self.clear = False
-                game_framework.push_state(item_state)
+        # elif self.clear == True:
+        #     if self.div4 < 1000:
+        #         self.image3.draw(400, 300)
+        #     elif self.div4 == 1000:
+        #         self.clear = False
+        #         game_framework.push_state(item_state)
 
 class Bullet:
     def __init__(self):
@@ -145,7 +142,7 @@ def handle_events():
             elif event.key == SDLK_a:
                 hunter.dir += -1
                 hunter.non_zero_dir = -1
-            elif event.key == SDLK_k or event.key == SDLK_l:
+            if event.key == SDLK_k or event.key == SDLK_l:
                 bullets.append(Bullet())
                 # bullet_sound.fire_sound.play()
                 hunter.dir = 0
@@ -173,7 +170,7 @@ zombies = []
 skeletons = []
 
 running = True
-zombie_num = 30
+zombie_num = 0
 skeleton_num = 20
 wave_clear = False
 
@@ -189,21 +186,24 @@ def collision_check():
             else:
                 zombie.x -= 0.3
             zombie.of_frequency += 1
-            if zombie.of_frequency % 100 == 0:
+            if zombie.of_frequency % 200 == 0:
                 hunter.hp -= zombie.offense
                 # forest.after_hp -= zombie.offense
                 hunter.dir = 0
 
     for skeleton in skeletons:
         if (skeleton.row_x < hunter.high_x and skeleton.dir < 0) or (skeleton.high_x > hunter.row_x and skeleton.dir > 0):
+            skeleton.collision = True
             if skeleton.dir < 0:
                 skeleton.x += 0.3
             else:
                 skeleton.x -= 0.3
             skeleton.of_frequency += 1
-            if skeleton.of_frequency % 100 == 0:
+            if skeleton.of_frequency % 200 == 0:
                 hunter.hp -= skeleton.offense
                 hunter.dir = 0
+        else:
+            skeleton.collision = False
 
 def bullet_draw():
     for bullet in bullets:
@@ -220,7 +220,10 @@ def monster_draw():
             zombie.die_draw()
     for skeleton in skeletons:
         if skeleton.hp > 0:
-            skeleton.draw()
+            if skeleton.collision == True:
+                skeleton.attack_draw()
+            else:
+                skeleton.draw()
         else:
             skeleton.die_draw()
 
