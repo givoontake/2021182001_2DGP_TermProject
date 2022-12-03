@@ -3,6 +3,7 @@ import game_framework
 import logo_state
 import pause_state
 import item_state
+from monster import *
 import random
 import time
 
@@ -12,7 +13,7 @@ class Map:
         self.image2 = load_image('black.png')
         self.image3 = load_image('hp.png')
         self.background_music = load_music('background.mp3')
-        self.background_music.set_volume(15)
+        self.background_music.set_volume(2)
         self.background_music.repeat_play()
         self.decrease = 0
         self.before_hp = 1000
@@ -34,69 +35,6 @@ class Map:
         self.image3.draw(550, 330)
         self.image3.clip_draw(750-self.decrease, 400, 300, 100, 136-self.decrease, 525)
         # 업데이트는 맵이 먼저거 충돌 체크가 나중이라 헌터 드로우에서 바로 hp <=0이 체크가 되어서 빠르게 감소할경우 한 타임 늦게 hp가 감소
-
-class Zombie:
-    def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 90
-        self.random_location = False
-        self.offense = 30
-        self.of_frequency = 0
-        self.hp = 200
-        self.frame, self.frame2 = 0, 0
-        self.div = random.randint(0, 200)
-        self.div2 = 0
-        self.dir = 0
-        self.image = load_image('zombie.png')
-        # self.zombie_sound = load_wav('zombie_sound.wav') # 엑세스 위반..
-        # self.zombie_sound.set_volume(1)
-        # self.zombie_sound.repeat_play() # 객체 생성 시 보이지도 않는데 좀비 소리가 나겠네;
-        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
-
-    def update(self):
-        if self.random_location == False:
-            if self.x >= 0:
-                self.x = random.randint(1000, 2500)
-                self.dir = -1
-            else:
-                self.x = random.randint(-1700, -200)
-                self.dir = 1
-            self.random_location = True
-        if self.hp > 0:
-            self.div += 1
-            self.frame = self.div // 50
-            if self.div > 200:
-                self.div = 0
-        else:
-            self.div2 += 1
-            self.frame2 = self.div2 // 30
-        if self.hp > 0:
-            if self.dir < 0:
-                self.x -= 0.3
-            else:
-                self.x += 0.3
-        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
-
-    def draw(self):
-        if self.dir < 0:
-            self.image.clip_draw(self.frame * 120, 680, 120, 90, self.x, 90)
-        else:
-            self.image.clip_composite_draw(self.frame * 120, 680, 120, 90, 0, 'h', self.x, 90, 120, 90)
-
-    def die_draw(self):
-        if self.dir < 0:
-            if self.frame2 < 4:
-                self.image.clip_draw(self.frame2 * 120, 340, 120, 90, self.x, 90)
-            elif self.frame2 >= 4 and self.frame2 <= 7:
-                self.image.clip_draw((self.frame2-4) * 120, 220, 120, 90, self.x, 90)
-            else:
-                self.image.clip_draw(3 * 120, 220, 120, 90, self.x, 90)
-        else:
-            if self.frame2 < 4:
-                self.image.clip_composite_draw(self.frame2 * 120, 340, 120, 90, 0, 'h', self.x, 90, 120, 90)
-            elif self.frame2 >= 4 and self.frame2 <= 7:
-                self.image.clip_composite_draw((self.frame2 - 4) * 120, 220, 120, 90, 0, 'h', self.x, 90, 120, 90)
-            else:
-                self.image.clip_composite_draw(3 * 120, 220, 120, 90, 0, 'h', self.x, 90, 120, 90)
 
 class Player:
     def __init__(self):
@@ -174,7 +112,7 @@ class Bullet:
         self.x = hunter.x
         self.y = hunter.y
         self.fire_sound = load_wav('fire_sound.wav')
-        self.fire_sound.set_volume(25)
+        self.fire_sound.set_volume(2)
         self.sound = True
         self.bullet_dir = hunter.non_zero_dir
         self.div = 0
@@ -232,13 +170,15 @@ bullet_sound = None
 # zombie = None
 bullets = []
 zombies = []
+skeletons = []
 
 running = True
-monster_num = 5
+zombie_num = 30
+skeleton_num = 20
 wave_clear = False
 
 def remain_monster_check():
-    if len(zombies) == 0:
+    if len(zombies) == 0 and len(skeletons):
         hunter.clear = True
 
 def collision_check():
@@ -254,6 +194,17 @@ def collision_check():
                 # forest.after_hp -= zombie.offense
                 hunter.dir = 0
 
+    for skeleton in skeletons:
+        if (skeleton.row_x < hunter.high_x and skeleton.dir < 0) or (skeleton.high_x > hunter.row_x and skeleton.dir > 0):
+            if skeleton.dir < 0:
+                skeleton.x += 0.3
+            else:
+                skeleton.x -= 0.3
+            skeleton.of_frequency += 1
+            if skeleton.of_frequency % 100 == 0:
+                hunter.hp -= skeleton.offense
+                hunter.dir = 0
+
 def bullet_draw():
     for bullet in bullets:
         bullet.draw()
@@ -261,12 +212,17 @@ def bullet_draw():
             bullet.fire_sound.play()
             bullet.sound = False
 
-def zombie_draw():
+def monster_draw():
     for zombie in zombies:
         if zombie.hp > 0:
             zombie.draw()
         else:
             zombie.die_draw()
+    for skeleton in skeletons:
+        if skeleton.hp > 0:
+            skeleton.draw()
+        else:
+            skeleton.die_draw()
 
 remove = False
 
@@ -283,26 +239,45 @@ def bullet_del():
         if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
-def zombie_del():
+    for bullet in bullets:
+        remove = False
+        for skeleton in skeletons:
+            if (skeleton.row_x < bullet.x and skeleton.hp > 0 and skeleton.dir < 0) or (skeleton.high_x > bullet.x and skeleton.hp > 0 and skeleton.dir > 0):
+                bullets.remove(bullet)
+                skeleton.hp -= hunter.offense
+                remove = True
+                break
+        if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
+            bullets.remove(bullet)
+
+def monster_del():
     for zombie in zombies:
         if zombie.hp <= 0 and zombie.frame2 > 10:
             zombies.remove(zombie)
+
+    for skeleton in skeletons:
+        if skeleton.hp <= 0 and skeleton.frame3 > 10:
+            skeletons.remove(skeleton)
 
 def bullet_update():
     for bullet in bullets:
         bullet.update()
 
-def zombie_update():
+def monster_update():
     for zombie in zombies:
         zombie.update()
+    for skeleton in skeletons:
+        skeleton.update()
 
 def enter():
-    global hunter, forest, bullet, bullet_sound, zombies, running, monster_num
+    global hunter, forest, bullet, bullet_sound, zombies, running, zombie_num
+    global skeletons, skeleton_num
     hunter = Player()
     forest = Map()
     bullet = Bullet()
     bullet_sound = Bullet()
-    zombies = [Zombie() for i in range(monster_num)]
+    zombies = [Zombie() for i in range(zombie_num)]
+    skeletons = [Skeleton() for i in range(skeleton_num)]
     running = True
 
 
@@ -320,10 +295,10 @@ def update():
     forest.update()
     hunter.update()
     bullet_update()
-    zombie_update()
+    monster_update()
     collision_check()
     bullet_del()
-    zombie_del()
+    monster_del()
     remain_monster_check()
 
 # 게임 월드 랜더링
@@ -331,7 +306,7 @@ def draw_world():
     forest.draw()
     hunter.draw()
     bullet_draw()
-    zombie_draw()
+    monster_draw()
     delay(0.001)
 
 def draw():
