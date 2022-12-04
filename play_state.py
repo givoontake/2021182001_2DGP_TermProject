@@ -44,6 +44,7 @@ class Player:
         self.non_zero_dir = 1
         self.fire = False
         self.clear = False
+        self.die = False
         self.image = load_image('Player.png')
         self.image2 = load_image('mission_failed.png')
         self.image3 = load_image('mission_success.png')
@@ -56,12 +57,15 @@ class Player:
         self.frame = self.div // 50
         # self.frame = (self.frame + 1) % 4
         self.frame2 = (self.frame + 1) % 2
-        self.x += self.dir * 0.5
+        if self.die == False:
+            self.x += self.dir * 0.5
         if self.x > 750:
             self.x = 750
         elif self.x < 50:
             self.x = 50
         if self.hp <= 0:
+            if self.die == False:
+                self.die = True
             self.div3 += 1
             self.frame3 = self.div3 // 20
         if self.clear == True:
@@ -86,7 +90,7 @@ class Player:
             elif self.fire == True:
                 self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, 90, 62, 90)
                 self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, 90, 40, 80)
-        if self.hp <= 0:
+        elif self.hp <= 0:
             if self.frame3 == 0:
                 self.image.clip_draw(170, 100, 62, 90, self.x, 90)
             elif self.frame3 > 0:
@@ -168,14 +172,16 @@ bullet_sound = None
 bullets = []
 zombies = []
 skeletons = []
+balloons = []
 
 running = True
 zombie_num = 0
-skeleton_num = 20
+skeleton_num = 0
+balloon_num = 10
 wave_clear = False
 
 def remain_monster_check():
-    if len(zombies) == 0 and len(skeletons):
+    if (len(zombies) + len(skeletons) + len(balloons)) == 0:
         hunter.clear = True
 
 def collision_check():
@@ -205,6 +211,12 @@ def collision_check():
         else:
             skeleton.collision = False
 
+    for balloon in balloons:
+        if (balloon.row_x < hunter.high_x and balloon.dir < 0) or (balloon.high_x > hunter.row_x and balloon.dir > 0):
+            if balloon.die == False:
+                hunter.hp -= balloon.offense
+                balloon.hp = -1
+
 def bullet_draw():
     for bullet in bullets:
         bullet.draw()
@@ -226,6 +238,11 @@ def monster_draw():
                 skeleton.draw()
         else:
             skeleton.die_draw()
+    for balloon in balloons:
+        if balloon.hp > 0:
+            balloon.draw()
+        else:
+            balloon.burst_draw()
 
 remove = False
 
@@ -253,6 +270,17 @@ def bullet_del():
         if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
+    for bullet in bullets:
+        remove = False
+        for balloon in balloons:
+            if (balloon.row_x < bullet.x and balloon.hp > 0 and balloon.dir < 0) or (balloon.high_x > bullet.x and balloon.hp > 0 and balloon.dir > 0):
+                bullets.remove(bullet)
+                balloon.hp -= hunter.offense
+                remove = True
+                break
+        if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
+            bullets.remove(bullet)
+
 def monster_del():
     for zombie in zombies:
         if zombie.hp <= 0 and zombie.frame2 > 10:
@@ -261,6 +289,10 @@ def monster_del():
     for skeleton in skeletons:
         if skeleton.hp <= 0 and skeleton.frame3 > 10:
             skeletons.remove(skeleton)
+
+    for balloon in balloons:
+        if balloon.hp <= 0 and balloon.frame2 > 12:
+            balloons.remove(balloon)
 
 def bullet_update():
     for bullet in bullets:
@@ -271,16 +303,19 @@ def monster_update():
         zombie.update()
     for skeleton in skeletons:
         skeleton.update()
+    for balloon in balloons:
+        balloon.update()
 
 def enter():
     global hunter, forest, bullet, bullet_sound, zombies, running, zombie_num
-    global skeletons, skeleton_num
+    global skeletons, skeleton_num, balloons, balloon_num
     hunter = Player()
     forest = Map()
     bullet = Bullet()
     bullet_sound = Bullet()
     zombies = [Zombie() for i in range(zombie_num)]
     skeletons = [Skeleton() for i in range(skeleton_num)]
+    balloons = [Balloon() for i in range(balloon_num)]
     running = True
 
 

@@ -181,3 +181,76 @@ class Skeleton:
                 self.image.clip_composite_draw(247, 140, 95, 70, 0, 'h', self.x, self.y, 95, 70)
             elif self.frame3 >= 4:
                 self.image.clip_composite_draw(342, 140, 95, 60, 0, 'h', self.x, self.y, 95, 70)
+
+
+class Balloon:
+    def __init__(self):
+        self.x, self.y = random.randint(-100, 100), 180
+        self.random_location = False
+        self.offense = 100
+        self.hp = 300
+        self.frame, self.frame2 = 0, 0
+        self.div = random.randint(0, 200)
+        self.div2 = 0
+        self.dir = 0
+        self.collision = False
+        self.die = False
+        self.image = load_image('balloon.png')
+        self.image2 = load_image('explosion.png')
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+
+    def update(self):
+        if self.random_location == False:
+            if self.x >= 0:
+                self.x = random.randint(1000, 2000)
+                self.dir = -1
+            else:
+                self.x = random.randint(-1200, -200)
+                self.dir = 1
+            self.random_location = True
+
+        if self.hp > 0:
+            self.div += 1
+            self.frame = self.div // 30
+            if self.div >= 300:
+                self.div = 0
+
+            if self.dir < 0:
+                self.x -= 0.2
+            else:
+                self.x += 0.2
+
+        else:
+            self.die = True
+            self.div2 += 1
+            self.frame2 = self.div2 // 30 # 죽는 모션과 공격 모션은 터지는 모션으로 동일
+
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+
+    def draw(self):
+        if self.dir < 0:
+            if self.frame <= 5:
+                self.image.clip_draw(0, 0, 80, 85, self.x, self.y - 2 * self.frame)
+            elif self.frame >= 6 and self.frame <= 9:
+                self.image.clip_draw(0, 0, 80, 85, self.x, self.y - 20 + 2 * self.frame)
+        else:
+            if self.frame <= 5:
+                self.image.clip_composite_draw(0, 0, 80, 85, 0, 'h', self.x, self.y - 2 * self.frame, 80, 85)
+            elif self.frame >= 6 and self.frame <= 9:
+                self.image.clip_composite_draw(0, 0, 80, 85, 0, 'h', self.x, self.y - 20 + 2 * self.frame, 80, 85)
+
+    def burst_draw(self):
+        if self.dir < 0:
+            if self.frame2 <= 4:
+                self.image2.clip_draw(self.frame2 * 200, 400, 200, 200, self.x, self.y)
+            elif self.frame >= 5 and self.frame <= 9:
+                self.image2.clip_draw((self.frame2 - 5) * 200, 200, 200, 200, self.x, self.y)
+            elif self.frame >= 10 and self.frame2 <= 11:
+                self.image2.clip_draw((self.frame2 - 10) * 200, 0, 200, 200, self.x, self.y)
+        else:
+            if self.frame2 <= 4:
+                self.image2.clip_composite_draw(self.frame2 * 200, 400, 200, 200, 0, 'h', self.x, self.y, 200, 200)
+            elif self.frame >= 5 and self.frame <= 9:
+                self.image2.clip_composite_draw((self.frame2 - 5) * 200, 200, 200, 200, 0, 'h', self.x, self.y, 200, 200)
+            elif self.frame >= 10 and self.frame2 <= 11:
+                self.image2.clip_composite_draw((self.frame2 - 10) * 200, 0, 200, 200, 0, 'h', self.x, self.y, 200, 200)
