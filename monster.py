@@ -3,8 +3,8 @@ import random
 
 class Zombie:
     def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 90
-        self.random_location = False
+        self.x, self.y = random.randint(1000, 1200), 90  # 만약 0을 경계로 양쪽으로 값을 잡으면 객체를 어펜드할 때 처음에 부여되는 랜덤값으로 한 번 그려져서 깜빡임 현상 발생
+        self.random_location = False                     # 그래서 캔버스에 안보이는 부분으로 값을 임의 설정
         self.offense = 30
         self.of_frequency = 0
         self.hp = 200
@@ -13,11 +13,14 @@ class Zombie:
         self.div2 = 0
         self.dir = 0
         self.image = load_image('zombie.png')
+        self.die_sound = load_wav('zombie_die.wav')
+        self.die_sound.set_volume(30)
+        self.die_sound_play = False
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
         if self.random_location == False:
-            if self.x >= 0:
+            if self.x >= 1100:
                 self.x = random.randint(1000, 2000)
                 self.dir = -1
             else:
@@ -31,6 +34,9 @@ class Zombie:
             if self.div >= 200:
                 self.div = 0
         else:
+            if self.die_sound_play == False:
+                self.die_sound.play()
+                self.die_sound_play = True
             self.div2 += 1
             self.frame2 = self.div2 // 30
         if self.hp > 0: # 유동적인 움직임을 구현하기 위해서는 업데이트를 함수를 만들어서 해줘야 할 것 같은데..
@@ -72,9 +78,9 @@ class Zombie:
 
 class Skeleton:
     def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 90
+        self.x, self.y = random.randint(1000, 1200), 90
         self.random_location = False
-        self.offense = 100
+        self.offense = 50
         self.of_frequency = 0
         self.hp = 300
         self.frame, self.frame2, self.frame3 = 0, 0, 0
@@ -83,11 +89,14 @@ class Skeleton:
         self.dir = 0
         self.collision = False
         self.image = load_image('skeleton.png')
+        self.die_sound = load_wav('skeleton_die.wav')
+        self.die_sound.set_volume(40)
+        self.die_sound_play = False
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
         if self.random_location == False:
-            if self.x >= 0:
+            if self.x >= 1100:
                 self.x = random.randint(1000, 2000)
                 self.dir = -1
             else:
@@ -121,6 +130,9 @@ class Skeleton:
             else:
                 self.div2 = 0
         else:
+            if self.die_sound_play == False:
+                self.die_sound.play()
+                self.die_sound_play = True
             self.div3 += 1
             self.frame3 = self.div3 // 30
 
@@ -197,7 +209,7 @@ class Skeleton:
 
 class Balloon:
     def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 200
+        self.x, self.y = random.randint(1000, 1200), 200
         self.random_location = False
         self.offense = 100
         self.hp = 300
@@ -209,11 +221,14 @@ class Balloon:
         self.die = False
         self.image = load_image('balloon.png')
         self.image2 = load_image('explosion.png')
+        self.explosion_sound = load_wav('explosion_sound.wav')
+        self.explosion_sound.set_volume(30)
+        self.explosion_sound_play = False
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y-50, self.y + 30
 
     def update(self):
         if self.random_location == False:
-            if self.x >= 0:
+            if self.x >= 1100:
                 self.x = random.randint(1000, 2000)
                 self.dir = -1
             else:
@@ -233,6 +248,9 @@ class Balloon:
                 self.x += 0.2
 
         else:
+            if self.explosion_sound_play == False:
+                self.explosion_sound.play()
+                self.explosion_sound_play = True
             self.die = True
             self.div2 += 1
             self.frame2 = self.div2 // 30 # 죽는 모션과 공격 모션은 터지는 모션으로 동일
