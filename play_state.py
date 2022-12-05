@@ -45,6 +45,8 @@ class Player:
         self.fire = False
         self.clear = False
         self.die = False
+        self.jump = False
+        self.jump_count = 0
         self.image = load_image('Player.png')
         self.image2 = load_image('mission_failed.png')
         self.image3 = load_image('mission_success.png')
@@ -63,6 +65,16 @@ class Player:
             self.x = 750
         elif self.x < 50:
             self.x = 50
+        if self.jump == True and self.die == False: # 점프부분
+            if self.jump_count <= 80:
+                self.y += (80-self.jump_count) * 0.03
+            elif self.jump_count >= 81 and self.jump_count <= 160:
+                self.y -= (self.jump_count-80) * 0.03
+            self.jump_count += 1
+            if self.jump_count == 161:
+                self.jump_count = 0
+                self.jump = False
+                # self.dir = 0
         if self.hp <= 0:
             if self.die == False:
                 self.die = True
@@ -74,27 +86,38 @@ class Player:
 
     def draw(self):
         if self.non_zero_dir > 0 and self.hp > 0:
-            if self.fire == False and self.dir != 0: # 돌아다니는 모션
-                self.image.clip_draw(40 + self.frame * 62, 450, 62, 90, self.x, 90)
+            if self.jump == True and self.fire == True:
+                self.image.clip_draw(300, 330, 62, 90, self.x, self.y)
+                self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 30, self.y - 15)
+            elif self.jump == True: # 여기까지 점프
+                self.image.clip_draw(240, 330, 62, 90, self.x, self.y)
+            elif self.fire == False and self.dir != 0: # 돌아다니는 모션
+                self.image.clip_draw(40 + self.frame * 62, 450, 62, 90, self.x, self.y)
             elif self.fire == False and self.dir == 0: # 정지 모션
-                self.image.clip_draw(40, 450, 62, 90, self.x, 90)
+                self.image.clip_draw(40, 450, 62, 90, self.x, self.y)
             elif self.fire == True: # 발사 모션
-                self.image.clip_draw(40, 320, 62, 90, self.x, 90)
-                self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, 90)
+                self.image.clip_draw(40, 320, 62, 90, self.x, self.y)
+                self.image.clip_draw(320 + 60 * self.frame2, 225, 40, 80, self.x + 40, self.y)
+
 
         elif self.non_zero_dir < 0 and self.hp > 0: # 방향만 반대고 모션은 똑같음
-            if self.fire == False and self.dir != 0:
-                self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
+            if self.jump == True and self.fire == True:
+                self.image.clip_composite_draw(300, 330, 62, 90, 0, 'h', self.x, self.y, 62, 90)
+                self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 30, self.y - 15, 40, 80)
+            elif self.jump == True:
+                self.image.clip_composite_draw(240, 330, 62, 90, 0, 'h', self.x, self.y, 62, 90)
+            elif self.fire == False and self.dir != 0:
+                self.image.clip_composite_draw(40 + self.frame * 62, 450, 62, 90, 0, 'h', self.x, self.y, 62, 90)
             elif self.fire == False and self.dir == 0:
-                self.image.clip_composite_draw(40, 450, 62, 90, 0, 'h', self.x, 90, 62, 90)
+                self.image.clip_composite_draw(40, 450, 62, 90, 0, 'h', self.x, self.y, 62, 90)
             elif self.fire == True:
-                self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, 90, 62, 90)
-                self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, 90, 40, 80)
+                self.image.clip_composite_draw(40, 320, 62, 90, 0, 'h', self.x, self.y, 62, 90)
+                self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, self.y, 40, 80)
         elif self.hp <= 0:
             if self.frame3 == 0:
-                self.image.clip_draw(170, 100, 62, 90, self.x, 90)
+                self.image.clip_draw(170, 100, 62, 90, self.x, self.y)
             elif self.frame3 > 0:
-                self.image.clip_draw(240, 100, 90, 90, self.x, 90)
+                self.image.clip_draw(240, 100, 90, 90, self.x, self.y)
             if self.frame3 > 5:
                 self.image2.draw(400, 300)
             if self.frame3 == 20:
@@ -117,6 +140,7 @@ class Bullet:
         self.sound = True
         self.bullet_dir = hunter.non_zero_dir
         self.div = 0
+        self.jump = hunter.jump
 
     def update(self):
         if self.bullet_dir > 0:
@@ -126,10 +150,15 @@ class Bullet:
 
     def draw(self):
         if self.bullet_dir > 0:
-            self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x + 40, 90)
+            if self.jump == False:
+                self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x + 40, self.y)
+            else:
+                self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x + 40, self.y - 10)
         elif self.bullet_dir < 0:
-            self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x - 40, 90)
-
+            if self.jump == False:
+                self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x - 40, self.y)
+            else:
+                self.image.clip_draw(320 + 60 * 2, 225, 20, 80, self.x - 40, self.y - 10)
 
 def handle_events():
     global bullets, fire_sound
@@ -148,18 +177,20 @@ def handle_events():
                 hunter.non_zero_dir = -1
             if event.key == SDLK_k or event.key == SDLK_l:
                 bullets.append(Bullet())
-                # bullet_sound.fire_sound.play()
-                hunter.dir = 0
+                # hunter.dir = 0
                 hunter.fire = True
+            if event.key == SDLK_w:
+                if hunter.jump == False:
+                    hunter.jump = True
 
-        elif event.type == SDL_KEYUP: # 키를 동시에 누를 경우 생기는 문제는 여기서 처리를 해줘야 하나..
+        elif event.type == SDL_KEYUP:
             # hunter.dir = 0
             if event.key == SDLK_d:
-               hunter.dir += -1
+                hunter.dir += -1
             elif event.key == SDLK_a:
                 hunter.dir += 1
             if event.key == SDLK_k or event.key == SDLK_l:
-                hunter.dir = 0
+                # hunter.dir = 0
                 hunter.fire = False
 
 
@@ -175,9 +206,9 @@ skeletons = []
 balloons = []
 
 running = True
-zombie_num = 0
-skeleton_num = 0
-balloon_num = 10
+zombie_num = 30
+skeleton_num = 10
+balloon_num = 0
 wave_clear = False
 
 def remain_monster_check():
@@ -186,7 +217,7 @@ def remain_monster_check():
 
 def collision_check():
     for zombie in zombies:
-        if (zombie.row_x < hunter.high_x and zombie.dir < 0) or (zombie.high_x > hunter.row_x and zombie.dir > 0):
+        if ((zombie.row_x < hunter.high_x and zombie.high_x > hunter.row_x and zombie.dir < 0) or (zombie.high_x > hunter.row_x and zombie.row_x < hunter.high_x and zombie.dir > 0)):
             if zombie.dir < 0:
                 zombie.x += 0.3
             else:
@@ -195,10 +226,10 @@ def collision_check():
             if zombie.of_frequency % 200 == 0:
                 hunter.hp -= zombie.offense
                 # forest.after_hp -= zombie.offense
-                hunter.dir = 0
+                # hunter.dir = 0
 
     for skeleton in skeletons:
-        if (skeleton.row_x < hunter.high_x and skeleton.dir < 0) or (skeleton.high_x > hunter.row_x and skeleton.dir > 0):
+        if ((skeleton.row_x < hunter.high_x and skeleton.high_x > hunter.row_x and skeleton.dir < 0) or (skeleton.high_x > hunter.row_x and skeleton.row_x < hunter.high_x and skeleton.dir > 0)):
             skeleton.collision = True
             if skeleton.dir < 0:
                 skeleton.x += 0.3
@@ -207,7 +238,7 @@ def collision_check():
             skeleton.of_frequency += 1
             if skeleton.of_frequency % 200 == 0:
                 hunter.hp -= skeleton.offense
-                hunter.dir = 0
+                # hunter.dir = 0
         else:
             skeleton.collision = False
 
@@ -252,10 +283,11 @@ def bullet_del():
         remove = False
         for zombie in zombies:
             if (zombie.row_x < bullet.x and zombie.hp > 0 and zombie.dir < 0) or (zombie.high_x > bullet.x and zombie.hp > 0 and zombie.dir > 0):
-                bullets.remove(bullet)
-                zombie.hp -= hunter.offense
-                remove = True
-                break
+                if zombie.row_y < bullet.y and zombie.high_y > bullet.y:
+                    bullets.remove(bullet)
+                    zombie.hp -= hunter.offense
+                    remove = True
+                    break
         if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
@@ -263,10 +295,11 @@ def bullet_del():
         remove = False
         for skeleton in skeletons:
             if (skeleton.row_x < bullet.x and skeleton.hp > 0 and skeleton.dir < 0) or (skeleton.high_x > bullet.x and skeleton.hp > 0 and skeleton.dir > 0):
-                bullets.remove(bullet)
-                skeleton.hp -= hunter.offense
-                remove = True
-                break
+                if skeleton.row_y < bullet.y and skeleton.high_y > bullet.y:
+                    bullets.remove(bullet)
+                    skeleton.hp -= hunter.offense
+                    remove = True
+                    break
         if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
@@ -274,10 +307,12 @@ def bullet_del():
         remove = False
         for balloon in balloons:
             if (balloon.row_x < bullet.x and balloon.hp > 0 and balloon.dir < 0) or (balloon.high_x > bullet.x and balloon.hp > 0 and balloon.dir > 0):
-                bullets.remove(bullet)
-                balloon.hp -= hunter.offense
-                remove = True
-                break
+                if balloon.row_y < bullet.y and balloon.high_y > bullet.y:
+                    print(bullet.y)
+                    bullets.remove(bullet)
+                    balloon.hp -= hunter.offense
+                    remove = True
+                    break
         if (bullet.x > 800 or bullet.x < 0) and remove == False: # remove는 800 근처에서 충돌 검사시 두번 삭제 오류 방지
             bullets.remove(bullet)
 
