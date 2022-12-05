@@ -13,9 +13,6 @@ class Zombie:
         self.div2 = 0
         self.dir = 0
         self.image = load_image('zombie.png')
-        # self.zombie_sound = load_wav('zombie_sound.wav') # 엑세스 위반..
-        # self.zombie_sound.set_volume(1)
-        # self.zombie_sound.repeat_play() # 객체 생성 시 보이지도 않는데 좀비 소리가 나겠네;
         self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
 
     def update(self):
@@ -27,6 +24,7 @@ class Zombie:
                 self.x = random.randint(-1200, -200)
                 self.dir = 1
             self.random_location = True
+
         if self.hp > 0:
             self.div += 1
             self.frame = self.div // 50
@@ -35,7 +33,14 @@ class Zombie:
         else:
             self.div2 += 1
             self.frame2 = self.div2 // 30
-        if self.hp > 0:
+        if self.hp > 0: # 유동적인 움직임을 구현하기 위해서는 업데이트를 함수를 만들어서 해줘야 할 것 같은데..
+            if self.dir < 0:
+                if self.x < 50:
+                    self.dir = 1
+            else:
+                if self.x > 750:
+                    self.dir = -1
+
             if self.dir < 0:
                 self.x -= 0.3
             else:
@@ -95,6 +100,13 @@ class Skeleton:
             self.frame = self.div // 50
             if self.div >= 250:
                 self.div = 0
+
+            if self.dir < 0:
+                if self.x < 50:
+                    self.dir = 1
+            else:
+                if self.x > 750:
+                    self.dir = -1
 
             if self.dir < 0:
                 self.x -= 0.3
@@ -185,7 +197,7 @@ class Skeleton:
 
 class Balloon:
     def __init__(self):
-        self.x, self.y = random.randint(-100, 100), 180
+        self.x, self.y = random.randint(-100, 100), 200
         self.random_location = False
         self.offense = 100
         self.hp = 300
@@ -197,7 +209,7 @@ class Balloon:
         self.die = False
         self.image = load_image('balloon.png')
         self.image2 = load_image('explosion.png')
-        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y-50, self.y + 30
 
     def update(self):
         if self.random_location == False:
@@ -225,7 +237,7 @@ class Balloon:
             self.div2 += 1
             self.frame2 = self.div2 // 30 # 죽는 모션과 공격 모션은 터지는 모션으로 동일
 
-        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 30, self.y + 30
+        self.row_x, self.high_x, self.row_y, self.high_y = self.x - 30, self.x + 30, self.y - 55, self.y + 20
 
     def draw(self):
         if self.dir < 0:
@@ -242,15 +254,15 @@ class Balloon:
     def burst_draw(self):
         if self.dir < 0:
             if self.frame2 <= 4:
-                self.image2.clip_draw(self.frame2 * 200, 400, 200, 200, self.x, self.y)
+                self.image2.clip_draw(self.frame2 * 300, 600, 300, 300, self.x, self.y)
             elif self.frame >= 5 and self.frame <= 9:
-                self.image2.clip_draw((self.frame2 - 5) * 200, 200, 200, 200, self.x, self.y)
+                self.image2.clip_draw((self.frame2 - 5) * 300, 300, 300, 300, self.x, self.y)
             elif self.frame >= 10 and self.frame2 <= 11:
-                self.image2.clip_draw((self.frame2 - 10) * 200, 0, 200, 200, self.x, self.y)
+                self.image2.clip_draw((self.frame2 - 10) * 300, 0, 300, 300, self.x, self.y)
         else:
             if self.frame2 <= 4:
-                self.image2.clip_composite_draw(self.frame2 * 200, 400, 200, 200, 0, 'h', self.x, self.y, 200, 200)
+                self.image2.clip_composite_draw(self.frame2 * 300, 600, 300, 300, 0, 'h', self.x, self.y, 300, 300)
             elif self.frame >= 5 and self.frame <= 9:
-                self.image2.clip_composite_draw((self.frame2 - 5) * 200, 200, 200, 200, 0, 'h', self.x, self.y, 200, 200)
+                self.image2.clip_composite_draw((self.frame2 - 5) * 300, 300, 300, 300, 0, 'h', self.x, self.y, 300, 300)
             elif self.frame >= 10 and self.frame2 <= 11:
-                self.image2.clip_composite_draw((self.frame2 - 10) * 200, 0, 200, 200, 0, 'h', self.x, self.y, 200, 200)
+                self.image2.clip_composite_draw((self.frame2 - 10) * 300, 0, 300, 300, 0, 'h', self.x, self.y, 300, 300)
