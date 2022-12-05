@@ -2,8 +2,8 @@ from pico2d import *
 import game_framework
 import logo_state
 import pause_state
-import item_state
 from monster import *
+from state import *
 import random
 import time
 
@@ -13,7 +13,7 @@ class Map:
         self.image2 = load_image('black.png')
         self.image3 = load_image('hp.png')
         self.background_music = load_music('background.mp3')
-        self.background_music.set_volume(2)
+        self.background_music.set_volume(5)
         self.background_music.repeat_play()
         self.decrease = 0
         self.before_hp = 1000
@@ -36,7 +36,8 @@ class Map:
 class Player:
     def __init__(self):
         self.x, self.y = 400, 90
-        self.offense = 50
+        self.offense = 60 # 변경 시 업그레이드 후 공격력, 방어력 변경 부분도 수정 필요
+        self.defense = 1
         self.hp = 1000
         self.frame, self.frame2, self.frame3 = 0, 0, 0
         self.div, self.div3, self.div4 = 0, 0, 0
@@ -47,6 +48,9 @@ class Player:
         self.die = False
         self.jump = False
         self.jump_count = 0
+        self.boost = False
+        self.time = 0
+        self.cur_time = 0
         self.image = load_image('Player.png')
         self.image2 = load_image('mission_failed.png')
         self.image3 = load_image('mission_success.png')
@@ -59,6 +63,12 @@ class Player:
         self.frame = self.div // 50
         # self.frame = (self.frame + 1) % 4
         self.frame2 = (self.frame + 1) % 2
+        # if self.boost == True:
+        #     self.cur_time = time.time()
+        #     if self.cur_time - self.time < 10:
+        #         hunter.offense = hunter.offense * 2
+        #     else:
+        #         hunter.offense = hunter.offense * 2
         if self.die == False:
             self.x += self.dir * 0.5
         if self.x > 750:
@@ -115,20 +125,20 @@ class Player:
                 self.image.clip_composite_draw(320 + 60 * self.frame2, 225, 40, 80, 0, 'h', self.x - 40, self.y, 40, 80)
         elif self.hp <= 0:
             if self.frame3 == 0:
-                self.image.clip_draw(170, 100, 62, 90, self.x, self.y)
+                self.image.clip_draw(170, 100, 62, 90, self.x, 90)
             elif self.frame3 > 0:
-                self.image.clip_draw(240, 100, 90, 90, self.x, self.y)
+                self.image.clip_draw(240, 100, 90, 90, self.x, 90)
             if self.frame3 > 5:
                 self.image2.draw(400, 300)
             if self.frame3 == 20:
                 delay(2)
                 game_framework.change_state(logo_state)
-        # elif self.clear == True:
-        #     if self.div4 < 1000:
-        #         self.image3.draw(400, 300)
-        #     elif self.div4 == 1000:
-        #         self.clear = False
-        #         game_framework.push_state(item_state)
+        if self.clear == True:
+            if self.div4 < 1000:
+                self.image3.draw(400, 300)
+            elif self.div4 == 1000:
+                delay(2)
+                game_framework.change_state(logo_state)
 
 class Bullet:
     def __init__(self):
@@ -136,7 +146,7 @@ class Bullet:
         self.x = hunter.x
         self.y = hunter.y
         self.fire_sound = load_wav('fire_sound.wav')
-        self.fire_sound.set_volume(2)
+        self.fire_sound.set_volume(8)
         self.sound = True
         self.bullet_dir = hunter.non_zero_dir
         self.div = 0
@@ -182,6 +192,30 @@ def handle_events():
             if event.key == SDLK_w:
                 if hunter.jump == False:
                     hunter.jump = True
+            if event.key == SDLK_1:
+                if state.g1 >= 3 and state.at < 9:
+                    state.at += 1
+                    state.g1 -= 3
+                    hunter.offense = (state.at * 6) + 60  # 급한대로 그냥 여기다 집어넣음.
+            if event.key == SDLK_2:
+                if state.g1 >= 2 and state.de < 9:
+                    state.de += 1
+                    state.g1 -= 2
+                    hunter.defense = 1 - 0.05*state.de
+            if event.key == SDLK_4:
+                if item.heal_use == False:
+                    hunter.hp = 1000
+                    forest.before_hp = 1000
+                    forest.before_hp = 1000
+                    forest.decrease = 0
+                    item.heal_use = True
+            # if event.key == SDLK_5:
+            #     if item.boost_use == False:
+            #         hunter.time = time.time()
+            #         hunter.boost = True
+            #         item.boost_use = True
+
+
 
         elif event.type == SDL_KEYUP:
             # hunter.dir = 0
@@ -199,6 +233,8 @@ hunter = None
 forest = None
 bullet = None
 bullet_sound = None
+state = None
+item = None
 # zombie = None
 bullets = []
 zombies = []
@@ -206,10 +242,13 @@ skeletons = []
 balloons = []
 
 running = True
-zombie_num = 30
-skeleton_num = 10
-balloon_num = 0
-wave_clear = False
+zombie_num = 50
+skeleton_num = 30
+balloon_num = 10
+
+zombie_in = 20 # in 부분은 처음에 enter에서 추가하는 좀비 수와 같다.
+skeleton_in = 10
+balloon_in = 5
 
 def remain_monster_check():
     if (len(zombies) + len(skeletons) + len(balloons)) == 0:
@@ -218,34 +257,35 @@ def remain_monster_check():
 def collision_check():
     for zombie in zombies:
         if ((zombie.row_x < hunter.high_x and zombie.high_x > hunter.row_x and zombie.dir < 0) or (zombie.high_x > hunter.row_x and zombie.row_x < hunter.high_x and zombie.dir > 0)):
-            if zombie.dir < 0:
-                zombie.x += 0.3
-            else:
-                zombie.x -= 0.3
-            zombie.of_frequency += 1
-            if zombie.of_frequency % 200 == 0:
-                hunter.hp -= zombie.offense
-                # forest.after_hp -= zombie.offense
-                # hunter.dir = 0
+            if zombie.high_y > hunter.row_y:
+                # if zombie.dir < 0:
+                #     zombie.x += 0.3
+                # else:
+                #     zombie.x -= 0.3
+                zombie.of_frequency += 1
+                if zombie.of_frequency % 200 == 0:
+                    hunter.hp -= zombie.offense * hunter.defense
+                    # forest.after_hp -= zombie.offense
+                    # hunter.dir = 0
 
     for skeleton in skeletons:
         if ((skeleton.row_x < hunter.high_x and skeleton.high_x > hunter.row_x and skeleton.dir < 0) or (skeleton.high_x > hunter.row_x and skeleton.row_x < hunter.high_x and skeleton.dir > 0)):
-            skeleton.collision = True
-            if skeleton.dir < 0:
-                skeleton.x += 0.3
-            else:
-                skeleton.x -= 0.3
-            skeleton.of_frequency += 1
-            if skeleton.of_frequency % 200 == 0:
-                hunter.hp -= skeleton.offense
-                # hunter.dir = 0
+            if skeleton.high_y > hunter.row_y:
+                skeleton.collision = True
+                # if skeleton.dir < 0:
+                #     skeleton.x += 0.3
+                # else:
+                #     skeleton.x -= 0.3
+                skeleton.of_frequency += 1
+                if skeleton.of_frequency % 200 == 0:
+                    hunter.hp -= skeleton.offense * hunter.defense
         else:
             skeleton.collision = False
 
     for balloon in balloons:
         if (balloon.row_x < hunter.high_x and balloon.dir < 0) or (balloon.high_x > hunter.row_x and balloon.dir > 0):
             if balloon.die == False:
-                hunter.hp -= balloon.offense
+                hunter.hp -= balloon.offense * hunter.defense
                 balloon.hp = -1
 
 def bullet_draw():
@@ -274,6 +314,9 @@ def monster_draw():
             balloon.draw()
         else:
             balloon.burst_draw()
+
+def state_draw():
+    state.draw()
 
 remove = False
 
@@ -308,7 +351,6 @@ def bullet_del():
         for balloon in balloons:
             if (balloon.row_x < bullet.x and balloon.hp > 0 and balloon.dir < 0) or (balloon.high_x > bullet.x and balloon.hp > 0 and balloon.dir > 0):
                 if balloon.row_y < bullet.y and balloon.high_y > bullet.y:
-                    print(bullet.y)
                     bullets.remove(bullet)
                     balloon.hp -= hunter.offense
                     remove = True
@@ -317,17 +359,37 @@ def bullet_del():
             bullets.remove(bullet)
 
 def monster_del():
+    global zombie_num, skeleton_num, balloon_num, zombie_in, skeleton_in, balloon_in
     for zombie in zombies:
         if zombie.hp <= 0 and zombie.frame2 > 10:
             zombies.remove(zombie)
+            state.g2 += 1
+            if zombie_num > zombie_in:
+                zombies.append(Zombie())
+                zombie_in += 1
 
     for skeleton in skeletons:
         if skeleton.hp <= 0 and skeleton.frame3 > 10:
             skeletons.remove(skeleton)
+            state.g2 += 2
+            if skeleton_num > skeleton_in:
+                skeletons.append(Skeleton())
+                skeleton_in += 1
 
     for balloon in balloons:
         if balloon.hp <= 0 and balloon.frame2 > 12:
             balloons.remove(balloon)
+            state.g2 += 3
+            if balloon_num > balloon_in:
+                balloons.append(Balloon())
+                balloon_in += 1
+
+    if state.g2 >= 10:
+        state.g2 -= 10
+        state.g1 += 1
+    if state.g1 >= 9:
+        state.g1 = 9
+        state.g2 = 0
 
 def bullet_update():
     for bullet in bullets:
@@ -341,16 +403,21 @@ def monster_update():
     for balloon in balloons:
         balloon.update()
 
+def item_update():
+    item.update()
+    item.x, item.y = hunter.x, hunter.y
+
 def enter():
-    global hunter, forest, bullet, bullet_sound, zombies, running, zombie_num
-    global skeletons, skeleton_num, balloons, balloon_num
+    global hunter, forest, bullet, running, state, item
+    global zombies, skeletons, balloons, zombie_in, skeleton_in, balloon_in
     hunter = Player()
     forest = Map()
     bullet = Bullet()
-    bullet_sound = Bullet()
-    zombies = [Zombie() for i in range(zombie_num)]
-    skeletons = [Skeleton() for i in range(skeleton_num)]
-    balloons = [Balloon() for i in range(balloon_num)]
+    state = State()
+    item = Item()
+    zombies = [Zombie() for i in range(zombie_in)]
+    skeletons = [Skeleton() for i in range(skeleton_in)]
+    balloons = [Balloon() for i in range(balloon_in)]
     running = True
 
 
@@ -369,6 +436,7 @@ def update():
     hunter.update()
     bullet_update()
     monster_update()
+    item_update()
     collision_check()
     bullet_del()
     monster_del()
@@ -380,6 +448,8 @@ def draw_world():
     hunter.draw()
     bullet_draw()
     monster_draw()
+    state_draw()
+    item.draw()
     delay(0.001)
 
 def draw():
@@ -394,15 +464,15 @@ def resume():
     pass
 
 
-def test_self(): # 자기 자신 실행
-    import sys
-    this_module = sys.modules['__main__']
-    pico2d.open_canvas()
-    game_framework.run(this_module)
-    pico2d.close_canvas()
-
-if __name__ == '__main__':  # 단독 실행이면
-    test_self()
+# def test_self(): # 자기 자신 실행
+#     import sys
+#     this_module = sys.modules['__main__']
+#     pico2d.open_canvas()
+#     game_framework.run(this_module)
+#     pico2d.close_canvas()
+#
+# if __name__ == '__main__':  # 단독 실행이면
+#     test_self()
 
 
 
