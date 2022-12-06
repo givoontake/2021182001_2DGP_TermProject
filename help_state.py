@@ -7,7 +7,7 @@ class Help:
         self.image = load_image('Help.png')
 
     def draw(self):
-        self.image.draw(400, 260)
+        self.image.draw(400, 300)
 
 
 running = True

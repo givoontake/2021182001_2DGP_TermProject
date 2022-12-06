@@ -1,6 +1,6 @@
 from pico2d import *
 import game_framework
-import play_state
+import start_help_state
 # image = None
 # logo_time = 0.0
 
@@ -48,7 +48,7 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN:
             if event.key == SDLK_RETURN:
-                game_framework.change_state(play_state)
+                game_framework.change_state(start_help_state)
 
 
 
