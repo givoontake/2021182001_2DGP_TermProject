@@ -36,7 +36,7 @@ class Map:
 class Player:
     def __init__(self):
         self.x, self.y = 400, 90
-        self.offense = 60 # 변경 시 업그레이드 후 공격력, 방어력 변경 부분도 수정 필요
+        self.offense = 50 # 변경 시 업그레이드 후 공격력, 방어력 변경 부분도 수정 필요
         self.defense = 1
         self.hp = 1000
         self.frame, self.frame2, self.frame3 = 0, 0, 0
@@ -63,12 +63,14 @@ class Player:
         self.frame = self.div // 50
         # self.frame = (self.frame + 1) % 4
         self.frame2 = (self.frame + 1) % 2
-        # if self.boost == True:
-        #     self.cur_time = time.time()
-        #     if self.cur_time - self.time < 10:
-        #         hunter.offense = hunter.offense * 2
-        #     else:
-        #         hunter.offense = hunter.offense * 2
+        if self.boost == True:
+            self.cur_time = time.time()
+            if self.cur_time - self.time < 5:
+                self.offense = 400
+            else:
+                self.offense = 50+5*state.at # 헌터 공격력 변경시 변경 필요
+                self.boost = False
+                item.boost_temp = True
         if self.die == False:
             self.x += self.dir * 0.5
         if self.x > 750:
@@ -196,7 +198,7 @@ def handle_events():
                 if state.g1 >= 3 and state.at < 9:
                     state.at += 1
                     state.g1 -= 3
-                    hunter.offense = (state.at * 6) + 60  # 급한대로 그냥 여기다 집어넣음.
+                    hunter.offense = (state.at * 5) + 50  # 급한대로 그냥 여기다 집어넣음.
             if event.key == SDLK_2:
                 if state.g1 >= 2 and state.de < 9:
                     state.de += 1
@@ -209,11 +211,11 @@ def handle_events():
                     forest.before_hp = 1000
                     forest.decrease = 0
                     item.heal_use = True
-            # if event.key == SDLK_5:
-            #     if item.boost_use == False:
-            #         hunter.time = time.time()
-            #         hunter.boost = True
-            #         item.boost_use = True
+            if event.key == SDLK_5:
+                if item.boost_use == False:
+                    hunter.time = time.time()
+                    hunter.boost = True
+                    item.boost_use = True
 
 
 
@@ -371,7 +373,7 @@ def monster_del():
     for skeleton in skeletons:
         if skeleton.hp <= 0 and skeleton.frame3 > 10:
             skeletons.remove(skeleton)
-            state.g2 += 2
+            state.g2 += 3
             if skeleton_num > skeleton_in:
                 skeletons.append(Skeleton())
                 skeleton_in += 1
@@ -379,7 +381,7 @@ def monster_del():
     for balloon in balloons:
         if balloon.hp <= 0 and balloon.frame2 > 12:
             balloons.remove(balloon)
-            state.g2 += 3
+            state.g2 += 5
             if balloon_num > balloon_in:
                 balloons.append(Balloon())
                 balloon_in += 1

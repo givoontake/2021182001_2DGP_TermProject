@@ -31,6 +31,7 @@ class Item:
     def __init__(self):
         self.x, self.y = 0, 0
         self.boost_use = False
+        self.boost_temp = False
         self.heal_use = False
         self.frame = 0
         self.div = 0
@@ -45,14 +46,16 @@ class Item:
 
 
     def draw(self):
-        if self.boost_use == False:
+        if self.boost_use == False and self.boost_temp == False:
             self.image.clip_draw(0, 0, 65, 50, 400, 550)
+        elif self.boost_use == True and self.boost_temp == False:
+            self.image2.clip_draw(200, 500, 200, 100, self.x, self.y+10)
 
         if self.heal_use == False:
             self.image.clip_draw(65, 0, 65, 50, 450, 550)
         else:
             if self.frame <= 4:
-                self.image2.clip_draw(100*self.frame, 100, 100, 100, self.x, self.y)
+                self.image2.clip_draw(200*self.frame, 100, 200, 100, self.x, self.y)
             elif self.frame >= 5 and self.frame <= 9:
-                self.image2.clip_draw(100*(self.frame-5), 0, 100, 100, self.x, self.y)
+                self.image2.clip_draw(200*(self.frame-5), 0, 200, 100, self.x, self.y)
 

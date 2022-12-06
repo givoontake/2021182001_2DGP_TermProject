@@ -5,7 +5,7 @@ class Zombie:
     def __init__(self):
         self.x, self.y = random.randint(1000, 1200), 90  # 만약 0을 경계로 양쪽으로 값을 잡으면 객체를 어펜드할 때 처음에 부여되는 랜덤값으로 한 번 그려져서 깜빡임 현상 발생
         self.random_location = False                     # 그래서 캔버스에 안보이는 부분으로 값을 임의 설정
-        self.offense = 30
+        self.offense = 50
         self.of_frequency = 0
         self.hp = 200
         self.frame, self.frame2 = 0, 0
@@ -80,7 +80,7 @@ class Skeleton:
     def __init__(self):
         self.x, self.y = random.randint(1000, 1200), 90
         self.random_location = False
-        self.offense = 50
+        self.offense = 100
         self.of_frequency = 0
         self.hp = 300
         self.frame, self.frame2, self.frame3 = 0, 0, 0
@@ -211,7 +211,7 @@ class Balloon:
     def __init__(self):
         self.x, self.y = random.randint(1000, 1200), 200
         self.random_location = False
-        self.offense = 100
+        self.offense = 300
         self.hp = 300
         self.frame, self.frame2 = 0, 0
         self.div = random.randint(0, 200)
